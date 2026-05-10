@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Route Tester — Test HTTP Endpoints Online</title>
+<meta name="description" content="A clean, powerful HTTP API client for the browser. Test GET, POST, PUT, DELETE, PATCH endpoints with custom headers and body. Copy as cURL. Dark theme.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://jacks-toolbox.example/api-route-tester">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #21262d;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text2: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --orange: #d29922;
+  --radius: 8px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+}
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+/* header */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px; border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+}
+.header h1 { font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+.header h1 svg { width: 26px; height: 26px; }
+.header h1 span { color: var(--text2); font-weight: 400; font-size: 14px; margin-left: 4px; }
+.container { max-width: 1200px; margin: 0 auto; padding: 20px 24px 80px; }
+
+/* request panel */
+.request-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+.row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.row:last-child { margin-bottom: 0; }
+.col { flex: 1; min-width: 0; }
+.col-shrink { flex: 0 0 auto; }
+label { display: block; font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+select, input, textarea {
+  font-family: var(--font);
+  background: var(--bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 8px 12px; font-size: 14px; width: 100%;
+  transition: border-color .15s;
+}
+select:focus, input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+textarea { resize: vertical; min-height: 80px; font-family: var(--mono); font-size: 13px; line-height: 1.5; }
+select { cursor: pointer; }
+
+/* method selector */
+.method-select { display: flex; gap: 0; }
+.method-btn {
+  padding: 8px 16px; font-size: 13px; font-weight: 600;
+  border: 1px solid var(--border); background: var(--bg);
+  color: var(--text2); cursor: pointer; transition: all .15s;
+  font-family: var(--mono);
+}
+.method-btn:first-child { border-radius: 6px 0 0 6px; }
+.method-btn:last-child { border-radius: 0 6px 6px 0; }
+.method-btn:not(:last-child) { border-right: none; }
+.method-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+.method-btn[data-method="GET"].active { background: var(--green); border-color: var(--green); }
+.method-btn[data-method="POST"].active { background: #d29922; border-color: #d29922; }
+.method-btn[data-method="PUT"].active { background: var(--accent); border-color: var(--accent); }
+.method-btn[data-method="DELETE"].active { background: var(--red); border-color: var(--red); }
+.method-btn[data-method="PATCH"].active { background: #bc8cff; border-color: #bc8cff; }
+
+/* headers table */
+.headers-section { margin-top: 16px; }
+.headers-list { margin-bottom: 8px; }
+.header-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+.header-row input { flex: 1; font-family: var(--mono); font-size: 13px; }
+.header-row .remove-header {
+  background: none; border: none; color: var(--red); cursor: pointer;
+  font-size: 18px; line-height: 1; padding: 4px 8px; border-radius: 4px;
+  transition: background .15s; flex: 0 0 auto;
+}
+.header-row .remove-header:hover { background: rgba(248,81,73,.15); }
+.add-header-btn {
+  background: none; border: 1px dashed var(--border); color: var(--text2);
+  padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer;
+  transition: all .15s; font-family: var(--font);
+}
+.add-header-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.body-section { margin-top: 16px; }
+
+/* action buttons */
+.actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+.btn {
+  padding: 10px 24px; border: none; border-radius: 6px; font-size: 14px;
+  font-weight: 600; cursor: pointer; transition: all .15s;
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font);
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+.btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-curl { background: transparent; color: var(--text2); border: 1px solid var(--border); font-size: 13px; padding: 8px 16px; }
+.btn-curl:hover { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,.08); }
+.btn-clear { background: transparent; color: var(--text2); border: none; font-size: 13px; padding: 8px 12px; }
+.btn-clear:hover { color: var(--red); }
+
+/* response panel */
+.response-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.response-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.response-panel-header h2 { font-size: 15px; font-weight: 600; }
+.response-meta { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.badge {
+  padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;
+  font-family: var(--mono);
+}
+.badge-2xx { background: rgba(63,185,80,.15); color: var(--green); }
+.badge-3xx { background: rgba(210,153,34,.15); color: var(--orange); }
+.badge-4xx { background: rgba(248,81,73,.15); color: var(--red); }
+.badge-5xx { background: rgba(248,81,73,.15); color: var(--red); }
+.badge-err { background: rgba(248,81,73,.15); color: var(--red); }
+.badge-pending { background: rgba(139,148,158,.15); color: var(--text2); }
+.meta-info { font-size: 13px; color: var(--text2); font-family: var(--mono); }
+
+/* tabs for response */
+.response-tabs { display: flex; border-bottom: 1px solid var(--border); }
+.tab {
+  padding: 10px 20px; font-size: 13px; font-weight: 500; color: var(--text2);
+  cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s;
+  background: none; font-family: var(--font);
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-content { display: none; padding: 16px 20px; }
+.tab-content.active { display: block; }
+.tab-content pre {
+  font-family: var(--mono); font-size: 13px; line-height: 1.6;
+  white-space: pre-wrap; word-break: break-all; max-height: 400px; overflow: auto;
+  background: var(--bg); border-radius: 6px; padding: 14px;
+  border: 1px solid var(--border);
+}
+.tab-content .response-headers-table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+}
+.tab-content .response-headers-table td {
+  padding: 6px 12px; border-bottom: 1px solid var(--border);
+  font-family: var(--mono); font-size: 12px; word-break: break-all;
+}
+.tab-content .response-headers-table td:first-child { color: var(--accent); font-weight: 500; width: 220px; }
+.tab-content .response-headers-table tr:last-child td { border-bottom: none; }
+
+/* history */
+.history-section { margin-top: 24px; }
+.history-section h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.history-section h2 span { font-size: 12px; color: var(--text2); font-weight: 400; }
+.history-list { display: flex; flex-direction: column; gap: 4px; }
+.history-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 14px; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer; transition: all .15s;
+  font-size: 13px;
+}
+.history-item:hover { border-color: var(--accent); background: var(--bg3); }
+.history-item .hist-method {
+  font-family: var(--mono); font-weight: 700; font-size: 11px;
+  padding: 2px 8px; border-radius: 4px; flex: 0 0 auto; min-width: 52px;
+  text-align: center;
+}
+.history-item .hist-method.get { color: var(--green); }
+.history-item .hist-method.post { color: #d29922; }
+.history-item .hist-method.put { color: var(--accent); }
+.history-item .hist-method.delete { color: var(--red); }
+.history-item .hist-method.patch { color: #bc8cff; }
+.history-item .hist-url { flex: 1; color: var(--text2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-item .hist-time { color: var(--text2); font-size: 11px; }
+.history-empty { color: var(--text2); font-size: 13px; padding: 12px 0; }
+
+/* curl output */
+.curl-output {
+  margin-top: 12px; padding: 12px 16px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+  font-family: var(--mono); font-size: 12px; line-height: 1.5;
+  white-space: pre-wrap; word-break: break-all; display: none;
+  position: relative;
+}
+.curl-output.show { display: block; }
+
+/* loading spinner */
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* toast */
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: var(--bg3); color: var(--text); padding: 10px 20px;
+  border-radius: 8px; border: 1px solid var(--border);
+  font-size: 13px; font-weight: 500;
+  opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 100;
+}
+.toast.show { opacity: 1; }
+
+/* footer */
+.footer {
+  text-align: center; padding: 24px; color: var(--text2); font-size: 13px;
+  border-top: 1px solid var(--border); margin-top: 40px;
+}
+.footer a { color: var(--accent); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* responsive */
+@media (max-width: 640px) {
+  .container { padding: 12px; }
+  .row { flex-direction: column; }
+  .method-btn { font-size: 12px; padding: 6px 10px; }
+  .response-meta { gap: 8px; }
+  .actions { flex-direction: column; }
+  .btn { justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <h1>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+    </svg>
+    API Route Tester
+    <span>— Test HTTP Endpoints Online</span>
+  </h1>
+</header>
+
+<main class="container">
+
+  <!-- Request Panel -->
+  <div class="request-panel">
+    <div class="row">
+      <div class="col-shrink" style="min-width:400px">
+        <label>Method</label>
+        <div class="method-select" id="methodSelect">
+          <button class="method-btn active" data-method="GET">GET</button>
+          <button class="method-btn" data-method="POST">POST</button>
+          <button class="method-btn" data-method="PUT">PUT</button>
+          <button class="method-btn" data-method="DELETE">DELETE</button>
+          <button class="method-btn" data-method="PATCH">PATCH</button>
+        </div>
+      </div>
+      <div class="col" style="flex:3">
+        <label for="urlInput">Request URL</label>
+        <input type="url" id="urlInput" placeholder="https://api.example.com/endpoint" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+
+    <div class="headers-section">
+      <label>Headers</label>
+      <div class="headers-list" id="headersList">
+        <!-- header rows injected by JS -->
+      </div>
+      <button class="add-header-btn" id="addHeaderBtn">+ Add Header</button>
+    </div>
+
+    <div class="body-section" id="bodySection" style="display:none">
+      <label for="bodyInput">Body</label>
+      <textarea id="bodyInput" placeholder='{"key": "value"}' spellcheck="false"></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="sendBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 2 11 13 22 22 22 2"/><line x1="2" y1="11" x2="7" y2="11"/><line x1="9" y1="15" x2="2" y2="20"/></svg>
+        Send
+      </button>
+      <button class="btn btn-curl" id="curlBtn">Copy as cURL</button>
+      <button class="btn btn-clear" id="clearBtn">Clear</button>
+    </div>
+
+    <div class="curl-output" id="curlOutput"></div>
+  </div>
+
+  <!-- Response Panel -->
+  <div class="response-panel" id="responsePanel">
+    <div class="response-panel-header">
+      <h2>Response</h2>
+      <div class="response-meta" id="responseMeta">
+        <span class="badge badge-pending" id="statusBadge">—</span>
+        <span class="meta-info" id="timingInfo">—</span>
+      </div>
+    </div>
+    <div class="response-tabs">
+      <button class="tab active" data-tab="body">Body</button>
+      <button class="tab" data-tab="headers">Headers</button>
+    </div>
+    <div class="tab-content active" id="tabBody">
+      <pre id="responsePre">Ready to send a request...</pre>
+    </div>
+    <div class="tab-content" id="tabHeaders">
+      <div id="responseHeadersContainer"><p style="color:var(--text2);font-size:13px">No response headers yet.</p></div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="history-section">
+    <h2>History <span id="historyCount">(0/10)</span></h2>
+    <div class="history-list" id="historyList">
+      <div class="history-empty">No requests yet. Send one to see it here.</div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="footer">
+  <a href="https://jacks-toolbox.example">jacks-toolbox</a> &mdash; API Route Tester
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== State ====================
+let selectedMethod = 'GET';
+let headerCount = 0;
+let currentResponseHeaders = null;
+let currentResponseBody = null;
+let currentStatus = null;
+let currentTiming = null;
+let history = loadHistory();
+
+// ==================== DOM refs ====================
+const urlInput = document.getElementById('urlInput');
+const headersList = document.getElementById('headersList');
+const bodySection = document.getElementById('bodySection');
+const bodyInput = document.getElementById('bodyInput');
+const sendBtn = document.getElementById('sendBtn');
+const curlBtn = document.getElementById('curlBtn');
+const clearBtn = document.getElementById('clearBtn');
+const curlOutput = document.getElementById('curlOutput');
+const statusBadge = document.getElementById('statusBadge');
+const timingInfo = document.getElementById('timingInfo');
+const responsePre = document.getElementById('responsePre');
+const responseHeadersContainer = document.getElementById('responseHeadersContainer');
+const historyList = document.getElementById('historyList');
+const historyCount = document.getElementById('historyCount');
+
+// ==================== Method Selection ====================
+document.querySelectorAll('.method-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedMethod = btn.dataset.method;
+    bodySection.style.display = (selectedMethod === 'GET' || selectedMethod === 'DELETE') ? 'none' : 'block';
+  });
+});
+
+// ==================== Headers Management ====================
+function addHeaderRow(key, value) {
+  const div = document.createElement('div');
+  div.className = 'header-row';
+  div.dataset.index = headerCount++;
+  div.innerHTML = `
+    <input type="text" class="header-key" placeholder="Header-Name" value="${escapeHtml(key || '')}" spellcheck="false">
+    <input type="text" class="header-value" placeholder="Value" value="${escapeHtml(value || '')}" spellcheck="false">
+    <button class="remove-header" title="Remove header">&times;</button>
+  `;
+  div.querySelector('.remove-header').addEventListener('click', () => {
+    div.remove();
+  });
+  headersList.appendChild(div);
+}
+
+document.getElementById('addHeaderBtn').addEventListener('click', () => addHeaderRow('', ''));
+addHeaderRow('Content-Type', 'application/json');
+
+// ==================== Helpers ====================
+function escapeHtml(s) {
+  if (typeof s !== 'string') return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function getHeaders() {
+  const headers = {};
+  document.querySelectorAll('.header-row').forEach(row => {
+    const k = row.querySelector('.header-key').value.trim();
+    const v = row.querySelector('.header-value').value.trim();
+    if (k) headers[k] = v;
+  });
+  return headers;
+}
+
+function getBody() {
+  if (selectedMethod === 'GET' || selectedMethod === 'DELETE') return null;
+  const val = bodyInput.value.trim();
+  return val || null;
+}
+
+function formatJSON(text) {
+  try {
+    return JSON.stringify(JSON.parse(text), null, 2);
+  } catch { return text; }
+}
+
+// ==================== Generate cURL ====================
+function generateCurl(method, url, headers, body) {
+  let cmd = `curl -X ${method}`;
+  if (method === 'GET') cmd = `curl`;
+  Object.entries(headers).forEach(([k,v]) => {
+    cmd += ` \\\n  -H '${k}: ${v}'`;
+  });
+  if (body) {
+    cmd += ` \\\n  -H 'Content-Type: application/json'`;
+    cmd += ` \\\n  -d '${body}'`;
+  }
+  cmd += ` \\\n  '${url}'`;
+  return cmd;
+}
+
+// ==================== Copy to clipboard ====================
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); showToast('Copied to clipboard!'); }
+    catch { showToast('Failed to copy'); }
+    document.body.removeChild(ta);
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._timeout); t._timeout = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ==================== History ====================
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem('apiTesterHistory') || '[]'); }
+  catch { return []; }
+}
+
+function saveHistory() {
+  localStorage.setItem('apiTesterHistory', JSON.stringify(history));
+}
+
+function addToHistory(method, url, status, timing) {
+  history.unshift({ method, url, status, timing, ts: Date.now() });
+  if (history.length > 10) history = history.slice(0, 10);
+  saveHistory();
+  renderHistory();
+}
+
+function renderHistory() {
+  historyCount.textContent = `(${history.length}/10)`;
+  if (history.length === 0) {
+    historyList.innerHTML = '<div class="history-empty">No requests yet. Send one to see it here.</div>';
+    return;
+  }
+  historyList.innerHTML = history.map((h, i) => {
+    const cls = h.method ? h.method.toLowerCase() : 'get';
+    const statusStr = h.status || 'ERR';
+    return `<div class="history-item" data-index="${i}">
+      <span class="hist-method ${cls}">${h.method || 'GET'}</span>
+      <span class="hist-url">${escapeHtml(h.url || '')}</span>
+      <span class="hist-time">${statusStr} · ${h.timing || '—'}</span>
+    </div>`;
+  }).join('');
+  historyList.querySelectorAll('.history-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const i = parseInt(el.dataset.index);
+      const h = history[i];
+      if (h) {
+        selectedMethod = h.method || 'GET';
+        document.querySelectorAll('.method-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.method === selectedMethod);
+        });
+        bodySection.style.display = (selectedMethod === 'GET' || selectedMethod === 'DELETE') ? 'none' : 'block';
+        urlInput.value = h.url || '';
+      }
+    });
+  });
+}
+
+// ==================== Send Request ====================
+sendBtn.addEventListener('click', async () => {
+  const url = urlInput.value.trim();
+  if (!url) { showToast('Please enter a URL'); return; }
+
+  const method = selectedMethod;
+  const headers = getHeaders();
+  const body = getBody();
+
+  // Show cURL immediately
+  const curlCmd = generateCurl(method, url, headers, body);
+  curlOutput.textContent = curlCmd;
+  curlOutput.classList.add('show');
+
+  // Set pending state
+  statusBadge.textContent = '⌛';
+  statusBadge.className = 'badge badge-pending';
+  timingInfo.textContent = 'sending...';
+  responsePre.textContent = 'Waiting for response...';
+  currentStatus = null; currentTiming = null; currentResponseHeaders = null; currentResponseBody = null;
+  sendBtn.disabled = true;
+  sendBtn.innerHTML = '<span class="spinner"></span> Sending';
+
+  const startTime = performance.now();
+
+  // Clean up content-type header if body is empty for GET/DELETE
+  const cleanHeaders = { ...headers };
+
+  // Build fetch options (omit body for GET/HEAD)
+  const fetchOptions = { method, headers: cleanHeaders };
+  if (body && method !== 'GET' && method !== 'DELETE' && method !== 'HEAD') {
+    // Try to detect if body is JSON
+    if (typeof body === 'string' && (body.startsWith('{') || body.startsWith('['))) {
+      try { fetchOptions.body = JSON.stringify(JSON.parse(body)); }
+      catch { fetchOptions.body = body; }
+    } else {
+      fetchOptions.body = body;
+    }
+  }
+
+  try {
+    const response = await fetch(url, fetchOptions);
+    const endTime = performance.now();
+    const timing = Math.round(endTime - startTime);
+
+    currentStatus = response.status;
+    currentTiming = timing;
+
+    // Response headers
+    const respHeaders = {};
+    response.headers.forEach((v, k) => { respHeaders[k] = v; });
+    currentResponseHeaders = respHeaders;
+
+    // Response body
+    const contentType = response.headers.get('content-type') || '';
+    let bodyText;
+    if (contentType.includes('application/json') || contentType.includes('text/')) {
+      bodyText = await response.text();
+    } else {
+      const blob = await response.blob();
+      bodyText = `[Binary data: ${blob.type}, ${blob.size} bytes]`;
+    }
+    currentResponseBody = bodyText;
+
+    // Update UI
+    updateResponseUI(response.status, timing, bodyText, respHeaders);
+
+    // History
+    addToHistory(method, url, response.status, `${timing}ms`);
+
+  } catch (err) {
+    const endTime = performance.now();
+    const timing = Math.round(endTime - startTime);
+    currentTiming = timing;
+    currentStatus = 'ERR';
+    currentResponseHeaders = null;
+    currentResponseBody = err.message;
+
+    // If CORS/network error, still show curl command
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      responsePre.textContent = `⚠ CORS or Network Error\n\nThis browser could not reach the endpoint directly due to CORS restrictions or a network issue.\n\nThe cURL command above should work from your terminal.\n\nError: ${err.message}`;
+    } else {
+      responsePre.textContent = `Error: ${err.message}`;
+    }
+
+    statusBadge.textContent = 'ERR';
+    statusBadge.className = 'badge badge-err';
+    timingInfo.textContent = `${timing}ms`;
+
+    addToHistory(method, url, 'ERR', `${timing}ms`);
+  }
+
+  sendBtn.disabled = false;
+  sendBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 2 11 13 22 22 22 2"/><line x1="2" y1="11" x2="7" y2="11"/><line x1="9" y1="15" x2="2" y2="20"/></svg> Send`;
+});
+
+function updateResponseUI(status, timing, bodyText, respHeaders) {
+  // Status badge
+  const cat = status >= 200 && status < 300 ? '2xx' :
+              status >= 300 && status < 400 ? '3xx' :
+              status >= 400 && status < 500 ? '4xx' :
+              status >= 500 ? '5xx' : 'err';
+  statusBadge.textContent = status;
+  statusBadge.className = `badge badge-${cat}`;
+  timingInfo.textContent = `${timing}ms`;
+
+  // Body tab
+  if (typeof bodyText === 'string' && (bodyText.startsWith('{') || bodyText.startsWith('['))) {
+    responsePre.textContent = formatJSON(bodyText);
+  } else {
+    responsePre.textContent = bodyText;
+  }
+
+  // Headers tab
+  if (respHeaders && Object.keys(respHeaders).length > 0) {
+    let html = '<table class="response-headers-table">';
+    Object.entries(respHeaders).forEach(([k,v]) => {
+      html += `<tr><td>${escapeHtml(k)}</td><td>${escapeHtml(v)}</td></tr>`;
+    });
+    html += '</table>';
+    responseHeadersContainer.innerHTML = html;
+  } else {
+    responseHeadersContainer.innerHTML = '<p style="color:var(--text2);font-size:13px">No response headers.</p>';
+  }
+}
+
+// ==================== Tab Switching ====================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(`tab${tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset.tab.slice(1)}`).classList.add('active');
+  });
+});
+
+// ==================== cURL Button ====================
+curlBtn.addEventListener('click', () => {
+  const url = urlInput.value.trim();
+  if (!url) { showToast('Enter a URL first'); return; }
+  const cmd = generateCurl(selectedMethod, url, getHeaders(), getBody());
+  copyToClipboard(cmd);
+  curlOutput.textContent = cmd;
+  curlOutput.classList.add('show');
+});
+
+// ==================== Clear ====================
+clearBtn.addEventListener('click', () => {
+  urlInput.value = '';
+  bodyInput.value = '';
+  curlOutput.classList.remove('show');
+  curlOutput.textContent = '';
+  statusBadge.textContent = '—';
+  statusBadge.className = 'badge badge-pending';
+  timingInfo.textContent = '—';
+  responsePre.textContent = 'Ready to send a request...';
+  responseHeadersContainer.innerHTML = '<p style="color:var(--text2);font-size:13px">No response headers yet.</p>';
+  currentResponseHeaders = null;
+  currentResponseBody = null;
+  currentStatus = null;
+  currentTiming = null;
+});
+
+// ==================== Init ====================
+renderHistory();
+
+// Load from URL params for shareability
+const params = new URLSearchParams(window.location.search);
+if (params.get('url')) urlInput.value = params.get('url');
+</script>
+</body>
+</html>
